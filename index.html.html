@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Friends of Laphroaig - Plot Locator Portal</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Georgia, 'Times New Roman', serif;
+            background-color: #f5f3f0;
+            color: #2c2c2c;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 0;
+            background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: normal;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+            font-style: italic;
+        }
+        
+        .watermark {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            opacity: 0.3;
+            font-size: 0.8em;
+            color: white;
+        }
+        
+        .input-section {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #1a472a;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 16px;
+            font-family: Georgia, serif;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #2d5a3d;
+        }
+        
+        .button-primary {
+            background: #1a472a;
+            color: white;
+            padding: 14px 40px;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            font-family: Georgia, serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .button-primary:hover {
+            background: #2d5a3d;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #1a472a;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .result-section {
+            display: none;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .result-header {
+            background: #1a472a;
+            color: white;
+            padding: 20px 30px;
+            text-align: center;
+        }
+        
+        .result-content {
+            padding: 30px;
+        }
+        
+        .plot-details {
+            background: #f9f9f9;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .detail-row:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .detail-label {
+            font-weight: bold;
+            color: #1a472a;
+        }
+        
+        .detail-value {
+            color: #2c2c2c;
+        }
+        
+        #map {
+            width: 100%;
+            height: 500px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .disclaimer {
+            font-size: 0.85em;
+            color: #666;
+            text-align: center;
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+            font-style: italic;
+        }
+        
+        .certificate-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px;
+            background: #f5f5f5;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .certificate-id {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .button-secondary {
+            background: #666;
+            color: white;
+            padding: 10px 25px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .button-secondary:hover {
+            background: #555;
+        }
+        
+        .field-boundary {
+            fill: rgba(26, 71, 42, 0.1);
+            stroke: #1a472a;
+            stroke-width: 2;
+            stroke-dasharray: 5,5;
+        }
+        
+        .plot-popup {
+            font-family: Georgia, serif;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="watermark">LAPHROAIG</div>
+            <h1>Friends of Laphroaig</h1>
+            <p>Plot Location Registry Portal - Staff Access Only</p>
+        </div>
+        
+        <div class="input-section">
+            <h2 style="margin-bottom: 20px; color: #1a472a;">Locate Plot Record</h2>
+            <form id="plotForm">
+                <div class="form-group">
+                    <label for="plotNumber">Plot Number</label>
+                    <input type="text" id="plotNumber" placeholder="Enter plot number (e.g., 4711)">
+                </div>
+                
+                <div class="form-group">
+                    <label for="ownerName">Certificate Holder Name</label>
+                    <input type="text" id="ownerName" placeholder="Enter name as shown on certificate">
+                </div>
+                
+                <p style="margin-bottom: 20px; font-size: 0.9em; color: #666;">
+                    Enter either plot number or name to retrieve symbolic plot location from registry.
+                </p>
+                
+                <button type="submit" class="button-primary">Locate My Plot</button>
+            </form>
+        </div>
+        
+        <div class="loading" id="loadingSection">
+            <div class="spinner"></div>
+            <p>Retrieving plot coordinates from registry...</p>
+        </div>
+        
+        <div class="result-section" id="resultSection">
+            <div class="result-header">
+                <h2>Plot Location Record</h2>
+            </div>
+            
+            <div class="result-content">
+                <div class="plot-details">
+                    <div class="detail-row">
+                        <span class="detail-label">Certificate Holder:</span>
+                        <span class="detail-value" id="resultName">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Plot Number:</span>
+                        <span class="detail-value" id="resultPlotNumber">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Grid Reference:</span>
+                        <span class="detail-value" id="resultGridRef">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Coordinates:</span>
+                        <span class="detail-value" id="resultCoords">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Registry Status:</span>
+                        <span class="detail-value">Active - Lifetime Honorary Lease</span>
+                    </div>
+                </div>
+                
+                <h3 style="margin-bottom: 15px; color: #1a472a;">Plot Location on Islay</h3>
+                <div id="map"></div>
+                
+                <div class="disclaimer">
+                    Plot positions shown are symbolic and for commemorative use only. 
+                    This location is based on registry entry and does not constitute legal land ownership.
+                    Plots are located within the designated Friends of Laphroaig field near Kilbride Stream.
+                </div>
+            </div>
+            
+            <div class="certificate-footer">
+                <span class="certificate-id" id="certificateId">Certificate ID: FOL-</span>
+                <button class="button-secondary" onclick="window.print()">Print Plot Summary</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Leaflet JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    
+    <script>
+        // Global variables
+        let map = null;
+        let plotMarker = null;
+        
+        // Exact field boundary coordinates (irregular quadrilateral)
+        const FIELD_CORNERS = [
+            [55.63316, -6.15380],  // Top left
+            [55.63475, -6.14839],  // Top right
+            [55.63222, -6.15088],  // Bottom right
+            [55.63195, -6.15356]   // Bottom left
+        ];
+        
+        // Get bounding box
+        const FIELD_BOUNDS = {
+            topLeft: { lat: 55.63475, lng: -6.15380 },
+            bottomRight: { lat: 55.63195, lng: -6.14839 }
+        };
+        
+        // Deterministic hash function
+        function hashString(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32-bit integer
+            }
+            return Math.abs(hash);
+        }
+        
+        // Convert input to grid position
+        function getGridPosition(input) {
+            const hash = hashString(input.toLowerCase().trim());
+            const x = hash % 100;
+            const y = Math.floor(hash / 100) % 100;
+            return { x, y };
+        }
+        
+        // Convert grid position to lat/lon within field bounds
+        function gridToCoordinates(x, y) {
+            const latMin = FIELD_BOUNDS.bottomRight.lat;
+            const latMax = FIELD_BOUNDS.topLeft.lat;
+            const lonMin = FIELD_BOUNDS.topLeft.lng;
+            const lonMax = FIELD_BOUNDS.bottomRight.lng;
+            
+            const lat = latMin + ((y / 99) * (latMax - latMin));
+            const lon = lonMin + ((x / 99) * (lonMax - lonMin));
+            
+            return {
+                lat: lat,
+                lon: lon,
+                latFormatted: lat.toFixed(6),
+                lonFormatted: lon.toFixed(6)
+            };
+        }
+        
+        // Convert grid position to grid reference (e.g., F17)
+        function getGridReference(x, y) {
+            const letters = 'ABCDEFGHIJ';
+            const letterIndex = Math.floor(x / 10);
+            const number = Math.floor(y / 10);
+            const subX = x % 10;
+            const subY = y % 10;
+            return `${letters[letterIndex]}${number}${subX}`;
+        }
+        
+        // Generate certificate ID
+        function generateCertificateId(input) {
+            const hash = hashString(input);
+            const year = new Date().getFullYear();
+            return `FOL-${year}-${String(hash).substring(0, 6).padStart(6, '0')}`;
+        }
+        
+        // Initialize map
+        function initializeMap(coords, plotInfo) {
+            if (map) {
+                map.remove();
+            }
+            
+            // Create map centered on plot
+            map = L.map('map').setView([coords.lat, coords.lon], 17);
+            
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+            
+            // Add satellite imagery option
+            const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles &copy; Esri',
+                maxZoom: 19
+            });
+            
+            // Layer control
+            const baseMaps = {
+                "Map": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }),
+                "Satellite": satellite
+            };
+            
+            L.control.layers(baseMaps).addTo(map);
+            
+            // Draw field boundary polygon
+            const fieldPolygon = L.polygon(FIELD_CORNERS, {
+                color: '#1a472a',
+                weight: 2,
+                fillColor: '#1a472a',
+                fillOpacity: 0.1,
+                dashArray: '5, 5'
+            }).addTo(map);
+            
+            // Add field label
+            const fieldCenter = L.latLng(
+                55.63334,  // Average of all lats
+                -6.15166   // Average of all lngs
+            );
+            
+            L.marker(fieldCenter, {
+                icon: L.divIcon({
+                    className: 'field-label',
+                    html: '<div style="background: white; padding: 5px; border-radius: 3px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">Friends of Laphroaig Field</div>',
+                    iconSize: [180, 30],
+                    iconAnchor: [90, 15]
+                })
+            }).addTo(map);
+            
+            // Add plot marker
+            const plotIcon = L.divIcon({
+                className: 'plot-marker',
+                html: '<div style="background: #d32f2f; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
+                iconSize: [26, 26],
+                iconAnchor: [13, 13]
+            });
+            
+            plotMarker = L.marker([coords.lat, coords.lon], { icon: plotIcon }).addTo(map);
+            
+            // Add popup to marker
+            const popupContent = `
+                <div class="plot-popup">
+                    <strong>${plotInfo.name}</strong><br>
+                    Plot: ${plotInfo.plotNumber}<br>
+                    Grid: ${plotInfo.gridRef}<br>
+                    ${coords.latFormatted}°N, ${coords.lonFormatted}°W
+                </div>
+            `;
+            plotMarker.bindPopup(popupContent).openPopup();
+            
+            // Add distillery marker for reference
+            const distilleryCoords = [55.6258, -6.1430];
+            L.marker(distilleryCoords, {
+                icon: L.divIcon({
+                    className: 'distillery-marker',
+                    html: '<div style="background: #2d5a3d; color: white; padding: 5px 10px; border-radius: 3px; font-size: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">Laphroaig Distillery</div>',
+                    iconSize: [120, 25],
+                    iconAnchor: [60, 25]
+                })
+            }).addTo(map);
+            
+            // Add Kilbride Stream label (approximate location north of field)
+            L.marker([55.6355, -6.1480], {
+                icon: L.divIcon({
+                    className: 'stream-label',
+                    html: '<div style="background: #4a90e2; color: white; padding: 3px 8px; border-radius: 3px; font-size: 11px; opacity: 0.8;">Kilbride Stream →</div>',
+                    iconSize: [100, 20],
+                    iconAnchor: [50, 10]
+                })
+            }).addTo(map);
+        }
+        
+        // Handle form submission
+        document.getElementById('plotForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const plotNumber = document.getElementById('plotNumber').value.trim();
+            const ownerName = document.getElementById('ownerName').value.trim();
+            
+            if (!plotNumber && !ownerName) {
+                alert('Please enter either a plot number or name.');
+                return;
+            }
+            
+            // Use plot number if available, otherwise use name
+            const input = plotNumber || ownerName;
+            const displayName = ownerName || 'Not Specified';
+            const displayPlotNumber = plotNumber || 'Auto-Generated';
+            
+            // Show loading
+            document.getElementById('loadingSection').style.display = 'block';
+            document.getElementById('resultSection').style.display = 'none';
+            
+            // Simulate processing delay
+            setTimeout(() => {
+                // Calculate position
+                const gridPos = getGridPosition(input);
+                const coords = gridToCoordinates(gridPos.x, gridPos.y);
+                const gridRef = getGridReference(gridPos.x, gridPos.y);
+                
+                // Update results
+                document.getElementById('resultName').textContent = displayName;
+                document.getElementById('resultPlotNumber').textContent = displayPlotNumber;
+                document.getElementById('resultGridRef').textContent = gridRef;
+                document.getElementById('resultCoords').textContent = `${coords.latFormatted}°N, ${coords.lonFormatted}°W`;
+                document.getElementById('certificateId').textContent = generateCertificateId(input);
+                
+                // Hide loading, show results
+                document.getElementById('loadingSection').style.display = 'none';
+                document.getElementById('resultSection').style.display = 'block';
+                
+                // Initialize map with plot location
+                const plotInfo = {
+                    name: displayName,
+                    plotNumber: displayPlotNumber,
+                    gridRef: gridRef
+                };
+                initializeMap(coords, plotInfo);
+            }, 1500);
+        });
+    </script>
+</body>
+</html>
